@@ -230,7 +230,7 @@ def main():
         st.success(f"Predictied Life Expectancy: **{prediction:.2f} years**")
         st.caption(f"Model used: {model_used} tier.")
 
-        styled_header("Prediction Visualization", level="h2")
+        styled_header("Population Statistics Influence (% of Model Bias)", level="h2")
         bundle = advanced_bundle if consent else minimal_bundle
 
         # Coefficients from the fitted model, on RobustScaler-scaled units —
