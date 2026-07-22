@@ -1,5 +1,6 @@
 """
 WHO Life Expectancy Prediction — Streamlit App
+================================================
 
 Run locally with:  streamlit run app.py
 """
@@ -38,7 +39,13 @@ SENSITIVE_COLS = [
     "Alcohol_consumption",  # UPDATED: colleague's revised notebook now excludes this from the minimal/"Least information" model
 ]
 
-ALWAYS_DROP = ["Country"]  # used only to split on — see split_by_country()
+ALWAYS_DROP = [
+    "Country",  # used only to split on — see split_by_country()
+    "Economy_status_Developing",  # perfect complement of Economy_status_Developed — keeping both
+                                    # causes perfect collinearity (the "dummy variable trap");
+                                    # dropping one doesn't change predictions, just makes the
+                                    # remaining coefficient interpretable on its own.
+]
 
 WHO_BLUE = "#019CDE"  # sampled directly from the WHO logo file
 WHO_NAVY = "#001450"  # the brief deck's darker navy accent (closing panel fill)
@@ -47,6 +54,29 @@ REGIONS = [
     "Africa", "Asia", "Central America and Caribbean", "European Union",
     "Middle East", "North America", "Oceania", "Rest of Europe", "South America",
 ]
+
+# Readable labels for chart display only — underlying feature/column names are
+# unchanged. Based on the dataset's actual field descriptions: Polio/Diphtheria/
+# Hepatitis_B are immunization COVERAGE (%), not disease incidence, so they're
+# labeled accordingly to avoid misreading the chart.
+FEATURE_LABELS = {
+    "Polio": "Polio Immunisation",
+    "Diphtheria": "Diphtheria Immunisation",
+    "Hepatitis_B": "Hepatitis B Immunisation",
+    "Measles": "Measles Cases",
+    "Incidents_HIV": "HIV Incidents",
+    "BMI": "Average BMI",
+    "Adult_mortality": "Adult Mortality",
+    "Infant_deaths": "Infant Deaths",
+    "Under_five_deaths": "Under-Five Deaths",
+    "GDP_per_capita": "GDP per Capita",
+    "Population_mln": "Population",
+    "Alcohol_consumption": "Alcohol Consumption",
+    "Thinness_ten_nineteen_years": "Thinness (10-19 yrs)",
+    "Thinness_five_nine_years": "Thinness (5-9 yrs)",
+    "Schooling": "Schooling",
+    "Year": "Year",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -196,7 +226,6 @@ def main():
 
         economy_status = st.selectbox("Economy status", ["Developing", "Developed"])
         inputs["Economy_status_Developed"] = 1 if economy_status == "Developed" else 0
-        inputs["Economy_status_Developing"] = 1 if economy_status == "Developing" else 0
 
         region = st.selectbox("Region", REGIONS)
         for r in REGIONS:
@@ -240,7 +269,7 @@ def main():
         # keep the chart readable: show the non-region, non-binary features,
         # sorted by magnitude so the most influential features stand out
         plot_features = [f for f in coefs.index if not f.startswith("Region_")
-                          and f not in ("Economy_status_Developed", "Economy_status_Developing")]
+                          and f != "Economy_status_Developed"]
         plot_coefs = coefs[plot_features].reindex(
             coefs[plot_features].abs().sort_values(ascending=False).index
         )
@@ -252,7 +281,7 @@ def main():
         plot_pct = plot_coefs / total_abs * 100
 
         fig = go.Figure(go.Bar(
-            x=plot_pct.index, y=plot_pct.values,
+            x=[FEATURE_LABELS.get(f, f) for f in plot_pct.index], y=plot_pct.values,
             marker_color=sign_colors(plot_pct.values),
         ))
         fig.update_layout(
