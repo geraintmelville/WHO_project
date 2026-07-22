@@ -1,17 +1,5 @@
 """
 WHO Life Expectancy Prediction — Streamlit App
-================================================
-Implements the project brief:
-  - Two linear regression models: a MINIMAL model (safe/non-sensitive features
-    only) and an ADVANCED model (all features, including sensitive health data).
-  - A single consent-based prediction function that routes to the right model.
-  - Country-stratified train/test split (every row for a given country stays
-    entirely in train or entirely in test).
-  - Two-column layout: inputs on the left, results + chart on the right.
-
->>> HOW TO USE THIS TEMPLATE <<<
-Places you'll likely want to adjust are marked with "TODO" — mainly the
-SENSITIVE_COLS list (your ethical judgement call from the brief).
 
 Run locally with:  streamlit run app.py
 """
