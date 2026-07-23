@@ -58,24 +58,22 @@ The app prompts:
 
 ### Known data issues
 
-- Missing values exist for some country-years; per the brief, these rows are
-  dropped rather than imputed.
-- `Infant_deaths` and `Under_five_deaths` are highly correlated — check VIF
+- `Infant_deaths` and `Under_five_deaths` are highly correlated — check VIF (Variance Inflation Factor)
   before including both in the same model.
 - `Economy_status_Developed`/`Economy_status_Developing` are complementary
-  dummies — only include one to avoid perfect multicollinearity.
+  dummies — only one included to avoid perfect multicollinearity.
 
 ---
 
 ## 2. Ethical Considerations
 
-- **Data minimisation:** the minimal model should only use features a
+- **Data minimisation:** the ethical model should only use features a
   country would be comfortable disclosing without correlation risk
   (e.g. schooling, GDP, population) — explicitly excluding granular health
   statistics.
-- **Informed consent:** the advanced model is never used silently; the
+- **Informed consent:** the robust model is never used without consent; the
   app requires an explicit Y/N response before switching.
-- **Feature justification:** for every feature in the advanced model, we
+- **Feature justification:** for every feature in the robust model, we
   document *why* it improves prediction and *what it reveals* if it did
   correlate back to a country's population.
 - **Fairness check:** we test both models' residuals split by
@@ -97,7 +95,7 @@ The app prompts:
 3. **Preprocessing** — dummy encoding, scaling where needed using Robust scaling, train/test split.
 4. **Modelling** — fit an OLS linear regression per model using
    `statsmodels`/`scikit-learn`.
-5. **Evaluation** — RMSE, R², residual analysis; benchmark against the
+5. **Evaluation** — RMSE, residual analysis; benchmark against the
    competitor's RMSE of 1.8.
 6. **Cross-validation** — k-fold CV to check robustness, not just a single
    train/test split.
@@ -120,7 +118,7 @@ The app will:
 
 | Model | RMSE | Notes |
 |---|---|---|
-| Minimal | *(to fill in)* | Privacy-preserving default |
+| Ethical | *(to fill in)* | Privacy-preserving default |
 | Advanced | *(to fill in)* | Requires consent |
 | Competitor baseline | — | 1.8 | Target to beat |
 
