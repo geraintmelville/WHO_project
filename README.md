@@ -58,7 +58,7 @@ The app prompts:
 
 
 ### Known data issues
-Multicolinearity - Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \ge R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, VIF $= \frac{1}{1-R^2}$. We found:
+Multicolinearity - Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \le R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, VIF $= \frac{1}{1-R^2}$. We found:
 - `Infant_deaths` - $59.34$, `Under_five_deaths` - $ 62.38$, `Adult_mortality` -$ 23.79$, as we might expect.
 - `Economy_status_Developed`/`Economy_status_Developing` -inf, they are complementary variables.
 - `Polio` - $11.82$, `Diphtheria` - $12.68$, since these are vaccinations levels they are highly correlated.
