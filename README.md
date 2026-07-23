@@ -123,7 +123,7 @@ Skewness varies widely across the numeric predictors:
 - **Informed consent:** the robust model is never used without consent; the
   app requires an explicit Y/N response before switching.
 - **Feature justification:** for every feature in the robust model, we
-  document *why* it improves prediction and *what it reveals* if it did
+  document why it improves prediction and what it reveals if it did
   correlate back to a country's population.
 - **Transparency:** linear regression is used deliberately over black-box
   alternatives so coefficients remain interpretable and auditable by WHO
