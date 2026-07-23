@@ -8,6 +8,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 DATA_PATH = "Life_Expectancy_Data.csv"  # TODO: adjust path if needed
 TARGET = "Life_expectancy"
@@ -249,3 +250,19 @@ def predict_life_expectancy(inputs: dict, consent: bool, bundle_eth, bundle_rob,
     row_full = pd.concat([row_scaled, row_passthrough], axis=1)
     prediction = model.predict(row_full[features])[0]
     return prediction
+
+def vif_check(df_train):
+    """Function used in EDA to examine the VIF of our features. Can be used by calling:
+    vif_check(test_train_split_spec(load_data(),0.2, random_state = 42)[0]). """
+    
+    df_train = df_train.select_dtypes(include='number').astype(float)
+    df_train.insert(0, 'const', 1.0)
+    
+    vifs = []
+    for i in range(df_train.shape[1]):
+        v = variance_inflation_factor(df_train.values, i)
+        vifs.append((df_train.columns[i], v))
+    
+    for name, v in vifs:
+        print(name, round(v,2))
+    return
