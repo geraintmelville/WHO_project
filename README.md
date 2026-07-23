@@ -90,10 +90,9 @@ Development status is similarly skewed: **20.7%** of rows are `Economy_status_De
 The dataset is a complete panel: 179 countries × 16 years (2000–2015) = 2,864 rows, with no missing country-years. This means rows are **not independent observations**, since each country contributes 16 repeated measures. For this reason, the train/test split is stratified **at the country level** (`train_test_split_spec`), not the row level, so that all years for a given country land entirely in one split. A naive row-level split would leak the same country into both train and test. We also ensure that regions appear in roughly equal proportions across the split to ensure model fairness.
 
 #### Ethical vs robust model framing
-The two models aren't just "accurate vs less accurate" — the accuracy gap is partly explained by what each model is allowed to see:
 
 - The **robust** model includes mortality/disease variables (`Adult_mortality`, `Infant_deaths`, `Under_five_deaths`) that correlate with `Life_expectancy` at **r = -0.92 to -0.95**. These are near-mechanical restatements of the target (life expectancy is calculated *from* mortality data), not independent causal predictors.
-- The **ethical** model excludes these (see `SENSITIVE_COLS`) and relies on structural/socioeconomic predictors instead — `Schooling` (r = 0.73), `GDP_per_capita` (r = 0.58) — which are genuinely predictive rather than circular.
+- The **ethical** model excludes these (see `SENSITIVE_COLS`) and relies on structural/socioeconomic predictors instead, `Schooling` (r = 0.73), `GDP_per_capita` (r = 0.58), which are genuinely predictive rather than circular.
 
 So the robust model's higher RMSE performance should be read with this in mind: some of its "accuracy" comes from features that are close to leaking the answer.
 
