@@ -118,7 +118,7 @@ The app will:
 |---|---|---|
 | Ethical | 4.354 | Privacy-preserving default |
 | Advanced | 1.454 | Requires consent |
-| Competitor baseline | — | 1.8 | Target to beat |
+| Competitor baseline | 1.8 | Target to beat |
 
 ---
 
