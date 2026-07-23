@@ -58,13 +58,60 @@ The app prompts:
 
 
 ### Known data issues
-Multicolinearity - Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \le R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, VIF $= \frac{1}{1-R^2}$. We found:
+
+#### Multicolinearity 
+
+Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \le R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, VIF $= \frac{1}{1-R^2}$. We found:
 - `Infant_deaths` - $59.34$, `Under_five_deaths` - $62.38$, `Adult_mortality` - $23.79$, as we might expect.
 - `Economy_status_Developed`/`Economy_status_Developing` - $\infty$ , they are complementary variables so $R^2 = 1$.
 - `Polio` - $11.82$, `Diphtheria` - $12.68$, since these are vaccinations levels they are highly correlated.
 - `Thinness_ten_nineteen_years` - $8.48$, `Thinness_five_nine_years` - $8.75$, again as we might expect.  
 
 We have removed `Economy_status_Developing` since it is redundant. If we wanted to produce the most efficient and most interpretable model possible, we would also remove a feature from each of the highly correlated groups, or look at creating a new feature which aggregates each feature in the groups. However since the brief only defined RMSE as our benchmark metric, we have included these features so maximize our signal and predictive power.
+
+### Regional class imbalance
+Region representation is highly uneven:
+
+| Region | Countries | Rows | % of data |
+|---|---|---|---|
+| Africa | 51 | 816 | 28.5% |
+| Asia | 27 | 432 | 15.1% |
+| European Union | 27 | 432 | 15.1% |
+| Central America & Caribbean | 19 | 304 | 10.6% |
+| Rest of Europe | 15 | 240 | 8.4% |
+| Middle East | 14 | 224 | 7.8% |
+| South America | 12 | 192 | 6.7% |
+| Oceania | 11 | 176 | 6.1% |
+| North America | 3 | 48 | 1.7% |
+
+Development status is similarly skewed: **20.7%** of rows are `Economy_status_Developed`, **79.3%** are `Economy_status_Developing`. Region and development-status coefficients for the smallest groups (North America especially) are estimated from very little data and should be interpreted with that caveat.
+
+#### Balanced panel structure
+The dataset is a complete panel: 179 countries × 16 years (2000–2015) = 2,864 rows, with no missing country-years. This matters for modelling choices — rows are **not independent observations**, since each country contributes 16 repeated measures. For this reason, the train/test split is stratified **at the country level** (`train_test_split_spec`), not the row level, so that all years for a given country land entirely in one split. A naive row-level split would leak the same country into both train and test. We also ensure that regions appear in roughly equal proportions across the split to ensure model fairness.
+
+#### Ethical vs robust model framing
+The two models aren't just "accurate vs less accurate" — the accuracy gap is partly explained by what each model is allowed to see:
+
+- The **robust** model includes mortality/disease variables (`Adult_mortality`, `Infant_deaths`, `Under_five_deaths`) that correlate with `Life_expectancy` at **r = -0.92 to -0.95**. These are near-mechanical restatements of the target (life expectancy is calculated *from* mortality data), not independent causal predictors.
+- The **ethical** model excludes these (see `SENSITIVE_COLS`) and relies on structural/socioeconomic predictors instead — `Schooling` (r = 0.73), `GDP_per_capita` (r = 0.58) — which are genuinely predictive rather than circular.
+
+So the robust model's higher RMSE performance should be read with this in mind: some of its "accuracy" comes from features that are close to leaking the answer.
+
+#### Predictor skew
+Skewness varies widely across the numeric predictors:
+
+| Feature | Skewness |
+|---|---|
+| `Population_mln` | 8.16 |
+| `Incidents_HIV` | 4.98 |
+| `GDP_per_capita` | 2.38 |
+| `Adult_mortality` | 1.38 |
+| `Infant_deaths` | 1.10 |
+| `Alcohol_consumption` | 0.57 |
+| `Schooling` | -0.16 |
+| `BMI` | -0.12 |
+
+`Population_mln` and `Incidents_HIV` in particular are heavily right-skewed, driven by a small number of very large or very high-incidence countries. This is the rationale for using **`RobustScaler`** (median/IQR-based) over `StandardScaler`: standard scaling is sensitive to skew and outliers, and would let these extreme values dominate the scaled feature space.
 
 ---
 
