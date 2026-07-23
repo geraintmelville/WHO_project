@@ -56,13 +56,14 @@ The app prompts:
 | `Schooling` | Average years of schooling | Non-sensitive |
 | `Economy_status_Developed` / `_Developing` | Development status (dummy-encoded) | Non-sensitive |
 
+
 ### Known data issues
-
-- `Infant_deaths` and `Under_five_deaths` are highly correlated — check VIF (Variance Inflation Factor)
-  before including both in the same model.
-- `Economy_status_Developed`/`Economy_status_Developing` are complementary
-  dummies — only one included to avoid perfect multicollinearity.
-
+Multicolinearity - Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \ge R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, $ VIF = \frac{1}{1-R^2}$. We found:
+- `Infant_deaths` $-59.34$, `Under_five_deaths` $- 62.38$, `Adult_mortality` $- 23.79$, as we might expect.
+- `Economy_status_Developed`/`Economy_status_Developing` $-inf$, they are complementary variables.
+- `Polio` $-11.82$, `Diphtheria` $-12.68$, since these are vaccinations levels they are highly correlated.
+- `Thinness_ten_nineteen_years` $- 8.48$, `Thinness_five_nine_years` $- 8.75$, again as we might expect.
+We have removed `Economy_status_Developing` since it is redundant. If we wanted to produce the most efficient and most interpretable model possible, we would also remove a feature from each of the highly correlated groups, or look at creating a new feature which aggregates each feature in the groups. However since the brief only defined RMSE as our benchmark metric, we have included these features so maximize our signal and predictive power.
 ---
 
 ## 2. Ethical Considerations
