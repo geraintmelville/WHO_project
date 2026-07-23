@@ -26,7 +26,7 @@ To respect that, we built **two models** rather than one:
 
 | Model | Uses | When it's used |
 |---|---|---|
-| **Ethical model** | Only non-sensitive, freely disclosed features | Default — used unless the user actively consents to more |
+| **Ethical model** | Only non-sensitive, freely disclosed features (Minimal Features)| Default — used unless the user actively consents to more |
 | **Robust model** | Minimal features + additional/sensitive population statistics | Only after explicit user consent |
 
 The app prompts:
@@ -56,31 +56,29 @@ The app prompts:
 | `Schooling` | Average years of schooling | Non-sensitive |
 | `Economy_status_Developed` / `_Developing` | Development status (dummy-encoded) | Non-sensitive |
 
-### Known data issues
 
-- Missing values exist for some country-years; per the brief, these rows are
-  dropped rather than imputed.
-- `Infant_deaths` and `Under_five_deaths` are highly correlated — check VIF
-  before including both in the same model.
-- `Economy_status_Developed`/`Economy_status_Developing` are complementary
-  dummies — only include one to avoid perfect multicollinearity.
+### Known data issues
+Multicolinearity - Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \le R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, VIF $= \frac{1}{1-R^2}$. We found:
+- `Infant_deaths` - $59.34$, `Under_five_deaths` - $62.38$, `Adult_mortality` - $23.79$, as we might expect.
+- `Economy_status_Developed`/`Economy_status_Developing` - $\infty$ , they are complementary variables so $R^2 = 1$.
+- `Polio` - $11.82$, `Diphtheria` - $12.68$, since these are vaccinations levels they are highly correlated.
+- `Thinness_ten_nineteen_years` - $8.48$, `Thinness_five_nine_years` - $8.75$, again as we might expect.  
+
+We have removed `Economy_status_Developing` since it is redundant. If we wanted to produce the most efficient and most interpretable model possible, we would also remove a feature from each of the highly correlated groups, or look at creating a new feature which aggregates each feature in the groups. However since the brief only defined RMSE as our benchmark metric, we have included these features so maximize our signal and predictive power.
 
 ---
 
 ## 2. Ethical Considerations
 
-- **Data minimisation:** the minimal model should only use features a
+- **Data minimisation:** the ethical model should only use features a
   country would be comfortable disclosing without correlation risk
   (e.g. schooling, GDP, population) — explicitly excluding granular health
   statistics.
-- **Informed consent:** the advanced model is never used silently; the
+- **Informed consent:** the robust model is never used without consent; the
   app requires an explicit Y/N response before switching.
-- **Feature justification:** for every feature in the advanced model, we
+- **Feature justification:** for every feature in the robust model, we
   document *why* it improves prediction and *what it reveals* if it did
   correlate back to a country's population.
-- **Fairness check:** we test both models' residuals split by
-  `Economy_status_Developed` vs. `Economy_status_Developing` to check
-  neither model systematically under-predicts for developing nations.
 - **Transparency:** linear regression is used deliberately over black-box
   alternatives so coefficients remain interpretable and auditable by WHO
   or country stakeholders.
@@ -94,14 +92,12 @@ The app prompts:
 1. **EDA** — distribution checks, missing data audit, correlation/VIF review.
 2. **Feature split** — define which columns are "minimal" vs. "advanced" (see
    table above), justified against the ethical criteria in Section 2.
-3. **Preprocessing** — dummy encoding, scaling where needed using Robust scaling, train/test split.
+3. **Preprocessing** — One Hot Encoding (dummy encoding), scaling where needed using Robust scaling, train/test split.
 4. **Modelling** — fit an OLS linear regression per model using
    `statsmodels`/`scikit-learn`.
-5. **Evaluation** — RMSE, R², residual analysis; benchmark against the
+5. **Evaluation** — RMSE, residual analysis; benchmark against the
    competitor's RMSE of 1.8.
-6. **Cross-validation** — k-fold CV to check robustness, not just a single
-   train/test split.
-7. **Deployment** — wrap both models in a single prediction function with a
+6. **Deployment** — wrap both models in a single prediction function with a
    consent-based switch, then build the Streamlit front end around it.
 
 ---
@@ -120,9 +116,9 @@ The app will:
 
 | Model | RMSE | Notes |
 |---|---|---|
-| Minimal | *(to fill in)* | Privacy-preserving default |
-| Advanced | *(to fill in)* | Requires consent |
-| Competitor baseline | — | 1.8 | Target to beat |
+| Ethical | 4.354 | Privacy-preserving default |
+| Advanced | 1.454 | Requires consent |
+| Competitor baseline | 1.8 | Target to beat |
 
 ---
 
