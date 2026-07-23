@@ -26,7 +26,7 @@ To respect that, we built **two models** rather than one:
 
 | Model | Uses | When it's used |
 |---|---|---|
-| **Ethical model** | Only non-sensitive, freely disclosed features | Default — used unless the user actively consents to more |
+| **Ethical model** | Only non-sensitive, freely disclosed features (Minimal Features)| Default — used unless the user actively consents to more |
 | **Robust model** | Minimal features + additional/sensitive population statistics | Only after explicit user consent |
 
 The app prompts:
@@ -76,9 +76,6 @@ The app prompts:
 - **Feature justification:** for every feature in the robust model, we
   document *why* it improves prediction and *what it reveals* if it did
   correlate back to a country's population.
-- **Fairness check:** we test both models' residuals split by
-  `Economy_status_Developed` vs. `Economy_status_Developing` to check
-  neither model systematically under-predicts for developing nations.
 - **Transparency:** linear regression is used deliberately over black-box
   alternatives so coefficients remain interpretable and auditable by WHO
   or country stakeholders.
@@ -97,9 +94,7 @@ The app prompts:
    `statsmodels`/`scikit-learn`.
 5. **Evaluation** — RMSE, residual analysis; benchmark against the
    competitor's RMSE of 1.8.
-6. **Cross-validation** — k-fold CV to check robustness, not just a single
-   train/test split.
-7. **Deployment** — wrap both models in a single prediction function with a
+6. **Deployment** — wrap both models in a single prediction function with a
    consent-based switch, then build the Streamlit front end around it.
 
 ---
@@ -118,8 +113,8 @@ The app will:
 
 | Model | RMSE | Notes |
 |---|---|---|
-| Ethical | *(to fill in)* | Privacy-preserving default |
-| Advanced | *(to fill in)* | Requires consent |
+| Ethical | 4.354 | Privacy-preserving default |
+| Advanced | 1.454 | Requires consent |
 | Competitor baseline | — | 1.8 | Target to beat |
 
 ---
