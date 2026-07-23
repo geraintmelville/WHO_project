@@ -69,7 +69,7 @@ Some features are highly correlated and therefore offer proportionally less pred
 
 We have removed `Economy_status_Developing` since it is redundant. If we wanted to produce the most efficient and most interpretable model possible, we would also remove a feature from each of the highly correlated groups, or look at creating a new feature which aggregates each feature in the groups. However since the brief only defined RMSE as our benchmark metric, we have included these features so maximize our signal and predictive power.
 
-### Regional class imbalance
+#### Regional class imbalance
 Region representation is highly uneven:
 
 | Region | Countries | Rows | % of data |
