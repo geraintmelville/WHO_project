@@ -9,7 +9,7 @@ The dataset consists of 2865 records
 # WHO Project
 
 Predicting country-level life expectancy with two linear regression models, an
-**etchical model** and a **robust model**, deployed in an
+**ethical model** and a **robust model**, deployed in an
 interactive Streamlit app that allows users to consent to the use of sensitive data and input their data accordingly.
 
 ---
@@ -17,7 +17,7 @@ interactive Streamlit app that allows users to consent to the use of sensitive d
 ## 1. Project Overview
 
 Our team was asked to estimate life expectancy across countries using WHO
-data (2000–2015, 183 countries). The brief raises an ethical question:
+data (2000–2015, 183 countries per year). The brief raises an ethical question:
 some countries are wary of sharing sensitive population data (e.g. health/medical
 records) because it can be correlated back to quality-of-life measures with
 financial or social consequences.
@@ -41,14 +41,6 @@ The app prompts:
 
 ---
 
-## 2. Data
-
-- **Source:** WHO life expectancy dataset, 2000–2015, 183 countries
-  (`Life_Expectancy_Data.csv`)
-- **Granularity:** one row per country per year
-- **Rows:** ~2,865 (after accounting for missing years)
-- **Target variable:** `Life_expectancy`
-
 ### Data dictionary
 
 | Column | Description | Sensitivity |
@@ -64,9 +56,6 @@ The app prompts:
 | `Schooling` | Average years of schooling | Non-sensitive |
 | `Economy_status_Developed` / `_Developing` | Development status (dummy-encoded) | Non-sensitive |
 
-*(Fill in the final minimal vs. advanced feature split once decided — see
-Section 4.)*
-
 ### Known data issues
 
 - Missing values exist for some country-years; per the brief, these rows are
@@ -78,7 +67,7 @@ Section 4.)*
 
 ---
 
-## 3. Ethical Considerations
+## 2. Ethical Considerations
 
 - **Data minimisation:** the minimal model should only use features a
   country would be comfortable disclosing without correlation risk
@@ -100,12 +89,12 @@ Section 4.)*
 
 ---
 
-## 4. Methodology
+## 3. Methodology
 
 1. **EDA** — distribution checks, missing data audit, correlation/VIF review.
 2. **Feature split** — define which columns are "minimal" vs. "advanced" (see
-   table above), justified against the ethical criteria in Section 3.
-3. **Preprocessing** — dummy encoding, scaling where needed, train/test split.
+   table above), justified against the ethical criteria in Section 2.
+3. **Preprocessing** — dummy encoding, scaling where needed using Robust scaling, train/test split.
 4. **Modelling** — fit an OLS linear regression per model using
    `statsmodels`/`scikit-learn`.
 5. **Evaluation** — RMSE, R², residual analysis; benchmark against the
@@ -117,46 +106,7 @@ Section 4.)*
 
 ---
 
-## 5. Repository Structure
-
-```
-├── data/
-│   └── Life_Expectancy_Data.csv
-├── notebooks/
-│   └── eda_and_modelling.ipynb
-├── src/
-│   ├── preprocessing.py
-│   ├── train_minimal_model.py
-│   ├── train_advanced_model.py
-│   └── predict.py          # single function, both models + consent logic
-├── models/
-│   ├── minimal_model.pkl
-│   └── advanced_model.pkl
-├── app/
-│   └── app.py               # Streamlit app
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 6. Installation & Setup
-
-```bash
-git clone <repo-url>
-cd <repo-name>
-pip install -r requirements.txt
-```
-
-Requires Python 3.10+, `pandas`, `statsmodels`, `scikit-learn`, `streamlit`.
-
----
-
-## 7. Running the App
-
-```bash
-streamlit run app/app.py
-```
+## 4. Running the App
 
 The app will:
 1. Ask for consent to use advanced data (Y/N).
@@ -166,50 +116,16 @@ The app will:
 
 ---
 
-## 8. Using the Prediction Function Directly
+## 5. Model Comparison / Results
 
-For non-app use (per the "single file containing your function" deliverable):
-
-```python
-from src.predict import predict_life_expectancy
-
-result = predict_life_expectancy(
-    features={...},
-    consent=True  # or False
-)
-```
-
----
-
-## 9. Model Comparison / Results
-
-| Model | Features used | RMSE | R² | Notes |
-|---|---|---|---|---|
-| Minimal | *(to fill in)* | *(to fill in)* | *(to fill in)* | Privacy-preserving default |
-| Advanced | *(to fill in)* | *(to fill in)* | *(to fill in)* | Requires consent |
-| Competitor baseline | — | 1.8 | — | Target to beat |
-
----
-
-## 10. Limitations & Future Work
-
-- Linear regression assumes linear relationships — a non-linear model may
-  capture more variance in the advanced case.
-- No uncertainty interval currently reported alongside point predictions.
-- Dataset ends in 2015 — predictions don't reflect more recent global health
-  shifts.
-
----
-
-## 11. Deliverables Checklist
-
-- [ ] Streamlit app file(s)
-- [ ] Single file containing the prediction function
-- [ ] (Optional) Link to live Streamlit deployment
-- [ ] This README
+| Model | RMSE | Notes |
+|---|---|---|
+| Minimal | *(to fill in)* | Privacy-preserving default |
+| Advanced | *(to fill in)* | Requires consent |
+| Competitor baseline | — | 1.8 | Target to beat |
 
 ---
 
 ## Authors
 
-*(add team names here)*
+Geraint, Zamzam, Sai
