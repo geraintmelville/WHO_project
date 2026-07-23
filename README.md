@@ -89,7 +89,7 @@ The app prompts:
 1. **EDA** — distribution checks, missing data audit, correlation/VIF review.
 2. **Feature split** — define which columns are "minimal" vs. "advanced" (see
    table above), justified against the ethical criteria in Section 2.
-3. **Preprocessing** — dummy encoding, scaling where needed using Robust scaling, train/test split.
+3. **Preprocessing** — One Hot Encoding (dummy encoding), scaling where needed using Robust scaling, train/test split.
 4. **Modelling** — fit an OLS linear regression per model using
    `statsmodels`/`scikit-learn`.
 5. **Evaluation** — RMSE, residual analysis; benchmark against the
