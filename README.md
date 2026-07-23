@@ -63,6 +63,7 @@ Multicolinearity - Some features are highly correlated and therefore offer propo
 - `Economy_status_Developed`/`Economy_status_Developing` $-inf$, they are complementary variables.
 - `Polio` $-11.82$, `Diphtheria` $-12.68$, since these are vaccinations levels they are highly correlated.
 - `Thinness_ten_nineteen_years` $- 8.48$, `Thinness_five_nine_years` $- 8.75$, again as we might expect.
+
 We have removed `Economy_status_Developing` since it is redundant. If we wanted to produce the most efficient and most interpretable model possible, we would also remove a feature from each of the highly correlated groups, or look at creating a new feature which aggregates each feature in the groups. However since the brief only defined RMSE as our benchmark metric, we have included these features so maximize our signal and predictive power.
 ---
 
