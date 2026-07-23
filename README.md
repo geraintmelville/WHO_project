@@ -118,7 +118,7 @@ Skewness varies widely across the numeric predictors:
 
 - **Data minimisation:** the ethical model should only use features a
   country would be comfortable disclosing without correlation risk
-  (e.g. schooling, GDP, population) — explicitly excluding granular health
+  (e.g. schooling, GDP, population), explicitly excluding granular health
   statistics.
 - **Informed consent:** the robust model is never used without consent; the
   app requires an explicit Y/N response before switching.
@@ -128,7 +128,7 @@ Skewness varies widely across the numeric predictors:
 - **Transparency:** linear regression is used deliberately over black-box
   alternatives so coefficients remain interpretable and auditable by WHO
   or country stakeholders.
-- **Intended use:** country-level trend estimation only — not for
+- **Intended use:** country-level trend estimation only, not for
   individual-level decisions, insurance, or resource-allocation cut-offs.
 
 ---
