@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError, field_validator
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -32,16 +33,107 @@ REGIONS = [
 
 ALWAYS_DROP = ["Country"] 
 
+
+class LifeExpectancyRow(BaseModel):
+    """Schema for a single row of the raw life-expectancy dataset. Bounds are
+    set from the observed data (e.g. Hepatitis_B/Polio/Diphtheria/Measles are
+    0-100 immunisation coverage %), not arbitrary guesses."""
+
+    Country: str = Field(min_length=1)
+    Region: str
+    Year: int = Field(ge=1990, le=2030)
+    Infant_deaths: float = Field(ge=0, allow_inf_nan=False)
+    Under_five_deaths: float = Field(ge=0, allow_inf_nan=False)
+    Adult_mortality: float = Field(ge=0, allow_inf_nan=False)
+    Alcohol_consumption: float = Field(ge=0, allow_inf_nan=False)
+    Hepatitis_B: float = Field(ge=0, le=100, allow_inf_nan=False)
+    Measles: float = Field(ge=0, le=100, allow_inf_nan=False)
+    BMI: float = Field(ge=0, allow_inf_nan=False)
+    Polio: float = Field(ge=0, le=100, allow_inf_nan=False)
+    Diphtheria: float = Field(ge=0, le=100, allow_inf_nan=False)
+    Incidents_HIV: float = Field(ge=0, allow_inf_nan=False)
+    GDP_per_capita: float = Field(ge=0, allow_inf_nan=False)
+    Population_mln: float = Field(ge=0, allow_inf_nan=False)
+    Thinness_ten_nineteen_years: float = Field(ge=0, le=100, allow_inf_nan=False)
+    Thinness_five_nine_years: float = Field(ge=0, le=100, allow_inf_nan=False)
+    Schooling: float = Field(ge=0, allow_inf_nan=False)
+    Economy_status_Developed: int = Field(ge=0, le=1)
+    Economy_status_Developing: int = Field(ge=0, le=1)
+    Life_expectancy: float = Field(ge=1, le=120, allow_inf_nan=False)
+
+    @field_validator("Region")
+    @classmethod
+    def region_must_be_known(cls, v: str) -> str:
+        if v not in REGIONS:
+            raise ValueError(f"unrecognised region: {v!r}")
+        return v
+
+    @field_validator("Economy_status_Developing")
+    @classmethod
+    def economy_flags_are_complementary(cls, v: int, info) -> int:
+        developed = info.data.get("Economy_status_Developed")
+        if developed is not None and v == developed:
+            raise ValueError(
+                "Economy_status_Developed/Developing must be complementary "
+                "(exactly one of the two should be 1)"
+            )
+        return v
+
+
+_ROW_ADAPTER = TypeAdapter(list[LifeExpectancyRow])
+
+
+def validate_data(df: pd.DataFrame, strict: bool = False) -> pd.DataFrame:
+    """Validate every row of df against LifeExpectancyRow.
+
+    strict=False (default): invalid rows are dropped and reported via the
+    Streamlit UI, and the cleaned dataframe is returned.
+    strict=True: raises ValueError listing every problem instead of dropping
+    anything, useful when running outside Streamlit (e.g. in a notebook/CI).
+    """
+    records = df.to_dict(orient="records")
+
+    try:
+        _ROW_ADAPTER.validate_python(records)
+        return df
+    except ValidationError as exc:
+        errors = exc.errors()
+        bad_positions = sorted({err["loc"][0] for err in errors})
+
+        if strict:
+            details = "\n".join(
+                f"row {err['loc'][0]} ({err['loc'][1] if len(err['loc']) > 1 else '?'}): {err['msg']}"
+                for err in errors
+            )
+            raise ValueError(f"Data validation failed for {len(bad_positions)} row(s):\n{details}")
+
+        st.warning(f"Dropped {len(bad_positions)} row(s) that failed data validation.")
+        with st.expander("Show validation errors"):
+            for err in errors:
+                row_pos = err["loc"][0]
+                field = err["loc"][1] if len(err["loc"]) > 1 else ""
+                st.write(f"Row {row_pos} ({field}): {err['msg']}")
+
+        bad_labels = df.index[bad_positions]
+        return df.drop(index=bad_labels).reset_index(drop=True)
+
+
 @st.cache_data
 def load_data() -> pd.DataFrame:
+    """Loads data from csv, drops any nulls in the target variable and validates 
+    against LifeExpectancyRow schema using validate_data function."""
+    
     df = pd.read_csv(DATA_PATH)
     df = df.dropna(subset=[TARGET])
+    df = validate_data(df)
     return df
 
 def train_test_split_spec(df: pd.DataFrame, test_size: float = 0.2, random_state: int = 42):
     """Stratified split at the COUNTRY level (not row level), so every row for
     a given country lands entirely in train or entirely in test. Country is
-    only used here to decide split membership — never as a model feature."""
+    only used here to decide split membership — never as a model feature. 
+    Split ensures each region is represented fairly across the split (roughly same 
+    proportion of each region in test and train sets."""
     
     country_region = df[["Country", "Region"]].drop_duplicates()
     train_countries, test_countries = train_test_split(
@@ -66,6 +158,9 @@ def encode_regions(train_df: pd.DataFrame, test_df: pd.DataFrame):
     return train_enc, test_enc
 
 def scale_data(X_train, X_test):
+    """Scale data using RobustScaler() from sklearn library. Scaler is fitted on train set, 
+    used to transform both train and test, and returned to be used to transform user inputs."""
+    
     cols_to_scale = ['Year', 'Infant_deaths', 'Under_five_deaths',
             'Adult_mortality', 'Alcohol_consumption', 'Hepatitis_B', 'Measles',
             'BMI', 'Polio', 'Diphtheria', 'Incidents_HIV', 'GDP_per_capita',
@@ -85,7 +180,10 @@ def scale_data(X_train, X_test):
     return X_train_scaled, X_test_scaled, scaler
 
 def fit_model(df_train: pd.DataFrame, df_test: pd.DataFrame, drop_cols: list[str]):
-
+    """General function which recieves a train and test set along with a set of columns to drop. 
+    Fits a simple linear regression model using the training data set, makes predictions on the 
+    test set and returns the model, list of features, the train and test RMSE as a 'bundle' (library)"""
+    
     safe_drop_cols = [c for c in drop_cols if c in df_train.columns]
     cols_to_drop = [TARGET] + ALWAYS_DROP + safe_drop_cols
     X_train = df_train.drop(columns=cols_to_drop)
@@ -108,8 +206,10 @@ def fit_model(df_train: pd.DataFrame, df_test: pd.DataFrame, drop_cols: list[str
 
 @st.cache_resource
 def train_all_models():
+    """Function that combines the functions defined above. When called, it will 
+    run the pipeline end-to-end and returns our ethical and robust models and the scaler used."""
     
-    # Load in data from csv in same directory
+    # Load and validate data
     df = load_data()
     
     # Split data into train/test using our special method
@@ -130,6 +230,10 @@ def train_all_models():
     return bundle_eth, bundle_rob, scaler
 
 def predict_life_expectancy(inputs: dict, consent: bool, bundle_eth, bundle_rob, scaler):
+    '''Takes user inputs, 'inputs' and 'consent', as well as our robust and ethical models as 
+    'bundles', and our scaler. Then chooses which model to use based on consent, scales the
+    user data and makes a prediction.'''
+    
     bundle = bundle_rob if consent else bundle_eth
     model, features = bundle["model"], bundle["features"]
 
@@ -145,14 +249,3 @@ def predict_life_expectancy(inputs: dict, consent: bool, bundle_eth, bundle_rob,
     row_full = pd.concat([row_scaled, row_passthrough], axis=1)
     prediction = model.predict(row_full[features])[0]
     return prediction
-
-def view_model(bundle):
-    model, features, train_rmse, test_rmse = bundle["model"], bundle["features"], bundle["train_rmse"], bundle["test_rmse"]
-    for col, coef in zip(features, model.coef_):
-        print(f"  {col}: {coef:.2f}")
-    print(f"Train RMSE: {train_rmse}")
-    print(f"Test RMSE: {test_rmse}")
-    return
-
-
-    
