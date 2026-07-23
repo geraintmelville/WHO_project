@@ -59,6 +59,9 @@ The app prompts:
 
 ### Known data issues
 
+#### Balanced panel structure
+The dataset is a complete panel: 179 countries × 16 years (2000–2015) = 2,864 rows, with no missing country-years. This means rows are **not independent observations**, since each country contributes 16 repeated measures. For this reason, the train/test split is stratified **at the country level** (`train_test_split_spec`), not the row level, so that all years for a given country land entirely in one split. A naive row-level split would leak the same country into both train and test. We also ensure that regions appear in roughly equal proportions across the split to ensure model fairness.
+
 #### Multicolinearity 
 
 Some features are highly correlated and therefore offer proportionally less predictive power than other features. We calculated VIF (Variance Inflation Factor) for all numeric features, to calculate vif, a linear regression model is fitted for each feature as the target variable, using only training data. We take the $0 \le R^2 \le 1$ value, which represents how much of the variation in the target variable is explained by the data, then, VIF $= \frac{1}{1-R^2}$. We found:
@@ -68,6 +71,17 @@ Some features are highly correlated and therefore offer proportionally less pred
 - `Thinness_ten_nineteen_years` - $8.48$, `Thinness_five_nine_years` - $8.75$, again as we might expect.  
 
 We have removed `Economy_status_Developing` since it is redundant. If we wanted to produce the most efficient and most interpretable model possible, we would also remove a feature from each of the highly correlated groups, or look at creating a new feature which aggregates each feature in the groups. However since the brief only defined RMSE as our benchmark metric, we have included these features so maximize our signal and predictive power.
+
+#### Country 
+
+The feature `country` is a categorical column with 179 possible values. Linear regression models require all data to be numerical, therefore we have two options: *Ordinal Encoding* or *One-hot Encoding*. Ordinal encoding will introduce an inherent 'order' in countries, this is a fictitious signal that will harm model performance. One-hot encoding will generate 178 boolean columns, massively increasing the complexity of our model and eating into our degrees of freedom (no_parameters:no_data_points will be reduced and therefore parameters or coefficients will be more volatile). We therefore decided to remove the countries column.
+
+#### Ethical vs robust model framing
+
+- The **robust** model includes mortality/disease variables (`Adult_mortality`, `Infant_deaths`, `Under_five_deaths`) that correlate with `Life_expectancy` at **r = -0.92 to -0.95**. These are near-mechanical restatements of the target (life expectancy is calculated *from* mortality data), not independent causal predictors.
+- The **ethical** model excludes these (see `SENSITIVE_COLS`) and relies on structural/socioeconomic predictors instead, `Schooling` (r = 0.73), `GDP_per_capita` (r = 0.58), which are genuinely predictive rather than circular.
+
+So the robust model's higher RMSE performance should be read with this in mind: some of its "accuracy" comes from features that are close to leaking the answer.
 
 #### Regional class imbalance
 Region representation is highly uneven:
@@ -85,16 +99,6 @@ Region representation is highly uneven:
 | North America | 3 | 48 | 1.7% |
 
 Development status is similarly skewed: **20.7%** of rows are `Economy_status_Developed`, **79.3%** are `Economy_status_Developing`. Region and development-status coefficients for the smallest groups (North America especially) are estimated from very little data and should be interpreted with that caveat.
-
-#### Balanced panel structure
-The dataset is a complete panel: 179 countries × 16 years (2000–2015) = 2,864 rows, with no missing country-years. This means rows are **not independent observations**, since each country contributes 16 repeated measures. For this reason, the train/test split is stratified **at the country level** (`train_test_split_spec`), not the row level, so that all years for a given country land entirely in one split. A naive row-level split would leak the same country into both train and test. We also ensure that regions appear in roughly equal proportions across the split to ensure model fairness.
-
-#### Ethical vs robust model framing
-
-- The **robust** model includes mortality/disease variables (`Adult_mortality`, `Infant_deaths`, `Under_five_deaths`) that correlate with `Life_expectancy` at **r = -0.92 to -0.95**. These are near-mechanical restatements of the target (life expectancy is calculated *from* mortality data), not independent causal predictors.
-- The **ethical** model excludes these (see `SENSITIVE_COLS`) and relies on structural/socioeconomic predictors instead, `Schooling` (r = 0.73), `GDP_per_capita` (r = 0.58), which are genuinely predictive rather than circular.
-
-So the robust model's higher RMSE performance should be read with this in mind: some of its "accuracy" comes from features that are close to leaking the answer.
 
 #### Predictor skew
 Skewness varies widely across the numeric predictors:
