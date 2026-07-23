@@ -26,7 +26,7 @@ To respect that, we built **two models** rather than one:
 
 | Model | Uses | When it's used |
 |---|---|---|
-| **Ethical model** | Only non-sensitive, freely disclosed features (Minimal Features)| Default — used unless the user actively consents to more |
+| **Ethical model** | Only non-sensitive, freely disclosed features (Minimal Features)| Default - used unless the user actively consents to more |
 | **Robust model** | Minimal features + additional/sensitive population statistics | Only after explicit user consent |
 
 The app prompts:
@@ -87,7 +87,7 @@ Region representation is highly uneven:
 Development status is similarly skewed: **20.7%** of rows are `Economy_status_Developed`, **79.3%** are `Economy_status_Developing`. Region and development-status coefficients for the smallest groups (North America especially) are estimated from very little data and should be interpreted with that caveat.
 
 #### Balanced panel structure
-The dataset is a complete panel: 179 countries × 16 years (2000–2015) = 2,864 rows, with no missing country-years. This matters for modelling choices — rows are **not independent observations**, since each country contributes 16 repeated measures. For this reason, the train/test split is stratified **at the country level** (`train_test_split_spec`), not the row level, so that all years for a given country land entirely in one split. A naive row-level split would leak the same country into both train and test. We also ensure that regions appear in roughly equal proportions across the split to ensure model fairness.
+The dataset is a complete panel: 179 countries × 16 years (2000–2015) = 2,864 rows, with no missing country-years. This means rows are **not independent observations**, since each country contributes 16 repeated measures. For this reason, the train/test split is stratified **at the country level** (`train_test_split_spec`), not the row level, so that all years for a given country land entirely in one split. A naive row-level split would leak the same country into both train and test. We also ensure that regions appear in roughly equal proportions across the split to ensure model fairness.
 
 #### Ethical vs robust model framing
 The two models aren't just "accurate vs less accurate" — the accuracy gap is partly explained by what each model is allowed to see:
